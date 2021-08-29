@@ -4,6 +4,11 @@ import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
 
+// a variable declared with const cannot be changed
+// a variable declared with var or let can be changed
+
+// But if a variable is an array or an object, it's value can be altered
+
 ReactDOM.render(
   <React.StrictMode>
     <App />
