@@ -3,48 +3,42 @@ import './App.css';
 import list from './list';
 import React, {Component} from "react";
 
-// let paragraph = "Welcome to react App Development";
-// let name = "Ryan";
+// Filter the results by search
+function isSearched(searchTerm){
+  return function(item){
+    return !searchTerm || item.title.toLowerCase().includes(searchTerm.toLowerCase());
+  }
+}
 
 class App extends Component{
 
   // Setting up internal component state
   // ES6 class can use constructors to initialize internal state
   constructor(props){
-
     // super props sets this.props to the constructor
     super(props);
 
     this.state = {
-      list: list
+      list: list,
+      searchTerm: ''
     }
 
     this.removeItem = this.removeItem.bind(this);
+    this.searchvalue = this.searchValue.bind(this);
   }
 
-  removeItem = (id) => {
-    console.log('Remove Item');
-
-    // const isNotId = item => item.objectId !== id;
-    // const updatedList = list.filter(isNotId);
-    // this.setState({ list:updatedList });
-
-    // using javascript filter method, we can filter out the clicked item
-    // and render the updated list
-    function isNotId(item){
-      return item.objectId !== id;
-    }
-
-    // create a new updated list
+  // let's rewrite removeItem function in ES6
+  removeItem(id){
+    const isNotId = item => item.objectId !== id;
     const updatedList = this.state.list.filter(isNotId);
-    // assign the new updated list to the list using setState method
-    this.setState({ list: updatedList});
+    this.setState({ list: updatedList });
   }
 
   // Get input fields value from search form
-  // searchValue(){
-  //   console.log('From Search')
-  // }
+  searchValue = (event) => {
+    // console.log(event);
+    this.setState({ searchTerm: event.target.value })
+  }
 
   render (){
     console.log(this);
@@ -52,12 +46,12 @@ class App extends Component{
     return (
         <div className="App">
 
-          {/*<form>*/}
-          {/*  <input type="text" onChange={ this.searchValue } />*/}
-          {/*</form>*/}
+          <form>
+            <input type="text" onChange={ this.searchValue } />
+          </form>
 
           {
-            this.state.list.map((item) => {
+            this.state.list.filter( isSearched(this.state.searchTerm) ).map((item) => {
 
               return (<div key={item.objectId}>
                 <h1>

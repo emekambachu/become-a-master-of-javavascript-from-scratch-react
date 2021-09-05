@@ -1,6 +1,6 @@
 const list = [
     {
-        title: 'Tell me the truth without words',
+        title: 'Learning how to code with react',
         url: 'http://kalorat.com',
         author: 'Ryan 01',
         num_comments: 100,
@@ -8,7 +8,7 @@ const list = [
         objectId: 1
     },
     {
-        title: 'Tell me the truth without words',
+        title: 'Its interesting though, but a lot to learn',
         url: 'http://kalorat.com',
         author: 'Ryan',
         num_comments: 200,
@@ -16,7 +16,7 @@ const list = [
         objectId: 2
     },
     {
-        title: 'Tell me the trut twoords',
+        title: 'Wish i can be fast like the others',
         url: 'http://kalorat.com',
         author: 'Ryan 3',
         num_comments: 300,
@@ -24,7 +24,7 @@ const list = [
         objectId: 3
     },
     {
-        title: 'Tell me the trut two three',
+        title: 'At the end.....Nothing good comes ease',
         url: 'http://kalorat.com',
         author: 'Ryan 4',
         num_comments: 400,
