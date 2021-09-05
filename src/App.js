@@ -41,17 +41,54 @@ class App extends Component{
   }
 
   render (){
+
+    const { list, searchTerm } = this.state;
+
     console.log(this);
 
     return (
-        <div className="App">
+        <Search className="App">
 
-          <form>
-            <input type="text" onChange={ this.searchValue } />
-          </form>
+          <Search
+              onChange={ this.searchValue }
+              value={ searchTerm }
+          >Search Here</Search>
 
+          <Table
+            list={ list }
+            searchTerm={ searchTerm }
+            removeItem={ this.removeItem }
+          />
+
+        </div>
+    );
+
+  }
+}
+
+class Search extends Component {
+  render() {
+    const { onChange, value, children } = this.props;
+    return(
+      <form>
+        { children }
+        <input
+            type="text"
+            onChange={ this.props.onChange }
+            value={ this.props.value }
+        />
+      </form>
+    )
+  }
+}
+
+class Table extends Component {
+  render(){
+    const { list, searchTerm, removeItem} = this.props;
+    return(
+        <div>
           {
-            this.state.list.filter( isSearched(this.state.searchTerm) ).map((item) => {
+            list.filter( isSearched(searchTerm) ).map((item) => {
 
               return (<div key={item.objectId}>
                 <h1>
@@ -60,16 +97,15 @@ class App extends Component{
                 <h4>
                   {item.num_comments} comments | { item.points } points
                 </h4>
-                {/* to use this keyword use the arrow function not the real one */}
+
                 <button type="button"
-                        onClick={() => this.removeItem(item.objectId)}>
+                        onClick={() => removeItem(item.objectId)}>
                   Remove</button>
               </div>);
             })
           }
         </div>
-    );
-
+    )
   }
 }
 
