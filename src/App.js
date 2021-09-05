@@ -22,23 +22,23 @@ class App extends Component{
     this.removeItem = this.removeItem.bind(this);
   }
 
-  removeItem(id){
+  removeItem = (id) => {
     console.log('Remove Item');
 
     // const isNotId = item => item.objectId !== id;
     // const updatedList = list.filter(isNotId);
     // this.setState({ list:updatedList });
 
+    // using javascript filter method, we can filter out the clicked item
+    // and render the updated list
+    function isNotId(item){
+      return item.objectId !== id;
+    }
 
-    // isNotId(item){
-    //   return item.objectId !== id;
-    // }
-    //
-    // // create a new updated list
-    // const updatedList = list.filter(isNotId);
-    //
-    // // assign the new updated list to the list using setState method
-    // this.setState({ list: updatedList});
+    // create a new updated list
+    const updatedList = this.state.list.filter(isNotId);
+    // assign the new updated list to the list using setState method
+    this.setState({ list: updatedList});
   }
 
   // Get input fields value from search form
@@ -47,6 +47,8 @@ class App extends Component{
   // }
 
   render (){
+    console.log(this);
+
     return (
         <div className="App">
 
@@ -55,11 +57,15 @@ class App extends Component{
           {/*</form>*/}
 
           {
-            list.map(function(item){
+            this.state.list.map((item) => {
 
               return (<div key={item.objectId}>
-                <h1>{item.title} | {item.author}</h1>
-                <h4>{item.author}</h4>
+                <h1>
+                  <a href={ item.url }>{item.title}</a> by {item.author}
+                </h1>
+                <h4>
+                  {item.num_comments} comments | { item.points } points
+                </h4>
                 {/* to use this keyword use the arrow function not the real one */}
                 <button type="button"
                         onClick={() => this.removeItem(item.objectId)}>
