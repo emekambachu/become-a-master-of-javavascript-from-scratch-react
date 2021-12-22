@@ -3,17 +3,19 @@ import './App.css';
 import list from './list';
 import React, {Component} from "react";
 import { Container, Row, FormGroup} from 'react-bootstrap';
+import PropTypes from 'prop-types';
+import { sortBy } from 'loadash';
+import {
+    DEFAULT_QUERY, DEFAULT_PAGE, DEFAULT_HPP, PATH_BASE, PATH_SEARCH, PARAM_SEARCH, PARAM_PAGE, PARAM_HPP
+} from './constants/index';
 
-// Default parameters to fetch data from API
-const DEFAULT_QUERY = 'react';
-const DEFAULT_PAGE = 0;
-const DEFAULT_HPP = 100;
-
-const PATH_BASE = 'https://hn.algolia.com/api/v1';
-const PATH_SEARCH = '/search';
-const PARAM_SEARCH = 'query=';
-const PARAM_PAGE = 'page=';
-const PARAM_HPP = 'hitsPerPage=';
+const SORTS = {
+    NONE: list => list,
+    TITLE: list => sortBy(list, 'title'),
+    AUTHOR: list => sortBy(list, 'author'),
+    COMMENTS: list => sortBy(list, 'num_comments').reverse(),
+    POINTS: list => sortBy(list, 'points').reverse(),
+}
 
 // const url = PATH_BASE + PATH_SEARCH + '?' + PARAM_SEARCH + DEFAULT_QUERY;
 const url = `${PATH_BASE}${PATH_SEARCH}?${PARAM_SEARCH}${DEFAULT_QUERY}&${PARAM_PAGE}&${PARAM_HPP}${DEFAULT_HPP}`;
@@ -25,6 +27,9 @@ function isSearched(searchTerm){
     return !searchTerm || item.title.toLowerCase().includes(searchTerm.toLowerCase());
   }
 }
+
+const withLoading = (Component) => ({ isLoading, ...rest }) =>
+    isLoading ? <Loading /> : <Component {...rest} />
 
 class App extends Component{
 
@@ -38,7 +43,9 @@ class App extends Component{
     this.state = {
       results: null,
       searchKey: '',
-      searchTerm: DEFAULT_QUERY
+      searchTerm: DEFAULT_QUERY,
+      isLoading: false,
+      sortKey: NONE,
     }
 
     // bind the functions to this (app component)
@@ -47,8 +54,19 @@ class App extends Component{
     this.fetchTopStories = this.fetchTopStories.bind(this);
     this.setTopStories = this.setTopStories.bind(this);
     this.onSubmit = this.onSubmit.bind(this);
+    this.onSort = this.onSort.bind(this);
 
   }
+
+  // Sorting Function
+    onSort(sortKey){
+      this.setState({ sortKey });
+    }
+
+  // Check top stories search term
+    checkTopStoriesSearchTerm(searchTerm){
+      return !this.state.results[searchTerm];
+    }
 
   // Set top stories
     setTopStories(result){
@@ -60,11 +78,13 @@ class App extends Component{
         const { searchKey, results } = this.state;
         const oldHits = results && results[searchKey] ? results[searchKey].hits : [];
       const updatedHits = [...oldHits, ...hits];
-      this.setState({ results: { ...results, [searchKey]: {hits: updatedHits, page} } });
+      this.setState({ results: { ...results, [searchKey]: { hits: updatedHits, page }}, isLoading: false
+      });
     }
 
   // Fetch the stories
   fetchTopStories(searchTerm, page){
+      this.setState({ isLoading: true });
       fetch(`${PATH_BASE}${PATH_SEARCH}?${PARAM_SEARCH}${searchTerm}&${PARAM_PAGE}${page}&${PARAM_HPP}${DEFAULT_HPP}`)
           .then(response => response.json())
           .then(result => this.setTopStories(result))
@@ -82,7 +102,11 @@ class App extends Component{
     onSubmit(event){
       const { searchTerm } = this.state;
       this.setState({ searchKey: searchTerm });
-      this.fetchTopStories(searchTerm, DEFAULT_PAGE);
+
+      if(this.checkTopStoriesSearchTerm(searchTerm)){
+          this.fetchTopStories(this.state.searchTerm, DEFAULT_PAGE);
+      }
+
       event.preventDefault();
     }
 
@@ -106,11 +130,9 @@ class App extends Component{
   }
 
   render (){
-
-    const { results, searchTerm, searchKey } = this.state;
+    const { results, searchTerm, searchKey, isLoading } = this.state;
 
     // if(!result){ return null; }
-
     const page = (results && results[searchKey] && results[searchKey].page) || 0;
     const list = (results && results[searchKey] && results[searchKey].hits) || [];
 
@@ -131,19 +153,24 @@ class App extends Component{
               </Row>
           </Container>
 
-        <Table
-            list={ list }
-            searchTerm={ searchTerm }
-            removeItem={ this.removeItem }
-        />
+        <Container>
+            <Row>
+                <Table
+                list={ list }
+                searchTerm={ searchTerm }
+                removeItem={ this.removeItem }
+                />
 
-        <div className="text-center alert">
-            <button
-                className="btn btn-success"
-                onClick={ () => this.fetchTopStories(searchTerm, page + 1) }>
-                Load more
-            </button>
-        </div>
+                <div className="text-center alert">
+                    <ButtonWithLoading
+                        isLoading={isLoading}
+                        className="btn btn-success"
+                        onClick={ () => this.fetchTopStories(searchTerm, page + 1) }>
+                        Load more
+                    </ButtonWithLoading>
+                </div>
+            </Row>
+        </Container>
 
         </div>
     );
@@ -157,31 +184,40 @@ class App extends Component{
 //   }
 // }
 
-const Search = ({ onChange, value, children, onSubmit }) => {
-  return(
-      <form onSubmit={ onSubmit }>
-          <FormGroup>
-          <h1 style={{ fontWeight: 'bold' }}>{ children }</h1>
-          <hr style={{ border: '2px solid black', width: '100px' }} />
-          <div className="input-group">
-              <input
-                  className="form-control width100 searchForm"
-                  type="text"
-                  onChange={ onChange }
-                  value={ value }
-              />
+class Search extends Component {
 
-              <span className="input-group-btn">
+    componentDidMount() {
+        this.input.focus();
+    }
+
+    render(){
+        const { onChange, value, children, onSubmit } = this.props;
+        return(
+            <form onSubmit={ onSubmit }>
+                <FormGroup>
+                    <h1 style={{ fontWeight: 'bold' }}>{ children }</h1>
+                    <hr style={{ border: '2px solid black', width: '100px' }} />
+                    <div className="input-group">
+                        <input
+                            className="form-control width100 searchForm"
+                            type="text"
+                            onChange={ onChange }
+                            value={ value }
+                            ref={(node) => { this.input = node }}
+                        />
+
+                        <span className="input-group-btn">
                 <Button
                     className="btn btn-primary searchBtn"
                     type="submit">Search
                 </Button>
               </span>
 
-          </div>
-          </FormGroup>
-      </form>
-  )
+                    </div>
+                </FormGroup>
+            </form>
+        )
+    }
 }
 
 const Table = ({ list, searchTerm, removeItem}) => {
@@ -209,11 +245,37 @@ const Table = ({ list, searchTerm, removeItem}) => {
   )
 }
 
+Table.propTypes = {
+    list: PropTypes.arrayOf(
+        PropTypes.shape({
+            objectID: PropTypes.string.isRequired,
+            author: PropTypes.string,
+            url: PropTypes.string,
+            num_comments: PropTypes.number,
+            points: PropTypes.number,
+        })
+    ).isRequired,
+    removeItem: PropTypes.func.isRequired,
+}
+
 const Button = ({ onclick, children, className='' }) =>
     <button
         className={ className }
         onClick={ onclick }>
       { children }
     </button>
+
+    Button.propTypes = {
+        onClick: PropTypes.func.isRequired,
+        className: PropTypes.string,
+        children: PropTypes.node.isRequired,
+    }
+
+    Button.defaultProps = {
+        className: '',
+    }
+
+    const Loading = () => <div>Loading...</div>
+    const ButtonWithLoading = withLoading(Button);
 
 export default App;
