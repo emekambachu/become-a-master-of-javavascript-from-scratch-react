@@ -37,5 +37,9 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+  "devDependencies": {
+    "@types/lodash-es": "^4.17.5",
+    "loadash": "^1.0.0"
   }
 }

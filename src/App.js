@@ -4,7 +4,7 @@ import list from './list';
 import React, {Component} from "react";
 import { Container, Row, FormGroup} from 'react-bootstrap';
 import PropTypes from 'prop-types';
-import { sortBy } from 'loadash';
+import { sortBy } from 'lodash';
 import {
     DEFAULT_QUERY, DEFAULT_PAGE, DEFAULT_HPP, PATH_BASE, PATH_SEARCH, PARAM_SEARCH, PARAM_PAGE, PARAM_HPP
 } from './constants/index';
@@ -45,7 +45,7 @@ class App extends Component{
       searchKey: '',
       searchTerm: DEFAULT_QUERY,
       isLoading: false,
-      sortKey: NONE,
+      sortKey: '',
     }
 
     // bind the functions to this (app component)
@@ -130,7 +130,7 @@ class App extends Component{
   }
 
   render (){
-    const { results, searchTerm, searchKey, isLoading } = this.state;
+    const { results, searchTerm, searchKey, isLoading, sortKey } = this.state;
 
     // if(!result){ return null; }
     const page = (results && results[searchKey] && results[searchKey].page) || 0;
@@ -157,6 +157,8 @@ class App extends Component{
             <Row>
                 <Table
                 list={ list }
+                sortKey={ sortKey }
+                onSort={ this.onSort }
                 searchTerm={ searchTerm }
                 removeItem={ this.removeItem }
                 />
@@ -220,13 +222,37 @@ class Search extends Component {
     }
 }
 
-const Table = ({ list, searchTerm, removeItem}) => {
+const Table = ({ list, searchTerm, removeItem, sortKey, onSort}) => {
   return(
       <div className="col-sm-10 col-sm-offset-1">
-        {
-          list.map((item) => {
+          <div>
+              <sort
+                  className="btn btn-xs btn-default sortBtn"
+                  sortKey={'TITLE'}
+                  onSort={ onSort }
+              >Title</sort>
 
-            return (<div key={item.objectId}>
+              <sort
+                  className="btn btn-xs btn-default sortBtn"
+                  sortKey={'AUTHOR'}
+                  onSort={ onSort }
+              >Author</sort>
+
+              <sort
+                  className="btn btn-xs btn-default sortBtn"
+                  sortKey={'COMMENTS'}
+                  onSort={ onSort }
+              >Comments</sort>
+
+              <sort
+                  className="btn btn-xs btn-default sortBtn"
+                  sortKey={'POINTS'}
+                  onSort={ onSort }
+              >Points</sort>
+          </div>
+        {
+          SORTS['TITLE'](list).map(item =>
+            <div key={item.objectId}>
               <h1>
                 <a href={ item.url }>{item.title}</a> by {item.author}
               </h1>
@@ -236,10 +262,10 @@ const Table = ({ list, searchTerm, removeItem}) => {
                           type="button"
                           onClick={() => removeItem(item.objectId)}>
                       Remove</button>
-              </h4><hr />
+              </h4><hr/>
 
-            </div>);
-          })
+            </div>
+          )
         }
       </div>
   )
@@ -277,5 +303,9 @@ const Button = ({ onclick, children, className='' }) =>
 
     const Loading = () => <div>Loading...</div>
     const ButtonWithLoading = withLoading(Button);
+    const Sort = ({ sortKey, onSort, children }) =>
+        <Button onClick={() => onSort(sortKey)}>
+            { children }
+        </Button>
 
 export default App;
