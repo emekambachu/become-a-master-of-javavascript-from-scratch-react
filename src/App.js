@@ -45,7 +45,7 @@ class App extends Component{
       searchKey: '',
       searchTerm: DEFAULT_QUERY,
       isLoading: false,
-      sortKey: '',
+      sortKey: 'NONE',
     }
 
     // bind the functions to this (app component)
@@ -60,7 +60,8 @@ class App extends Component{
 
   // Sorting Function
     onSort(sortKey){
-      this.setState({ sortKey });
+      const isSortReverse = this.state.sortKey === sortKey && !this.state.isSortReverse;
+      this.setState({ sortKey, isSortReverse });
     }
 
   // Check top stories search term
@@ -130,7 +131,7 @@ class App extends Component{
   }
 
   render (){
-    const { results, searchTerm, searchKey, isLoading, sortKey } = this.state;
+    const { results, searchTerm, searchKey, isLoading, sortKey, isSortReverse } = this.state;
 
     // if(!result){ return null; }
     const page = (results && results[searchKey] && results[searchKey].page) || 0;
@@ -158,6 +159,7 @@ class App extends Component{
                 <Table
                 list={ list }
                 sortKey={ sortKey }
+                isSortReverse={ isSortReverse }
                 onSort={ this.onSort }
                 searchTerm={ searchTerm }
                 removeItem={ this.removeItem }
@@ -222,36 +224,57 @@ class Search extends Component {
     }
 }
 
-const Table = ({ list, searchTerm, removeItem, sortKey, onSort}) => {
+const Table = ({ list, searchTerm, removeItem, sortKey, onSort, isSortReverse}) => {
+
+    const sortedList = SORTS[sortKey](list);
+    const reverseSortedList = isSortReverse ? sortedList.reverse() : sortedList;
+
   return(
       <div className="col-sm-10 col-sm-offset-1">
-          <div>
+          <div className="text-center">
+
+              <hr/>
+
               <sort
-                  className="btn btn-xs btn-default sortBtn"
+                  className="btn btn-xs btn-primary sortBtn"
+                  sortKey={'NONE'}
+                  onSort={ onSort }
+                  activeSortKey={sortKey}
+              >Default</sort>
+
+              <sort
+                  className="btn btn-xs btn-primary sortBtn"
                   sortKey={'TITLE'}
                   onSort={ onSort }
+                  activeSortKey={sortKey}
               >Title</sort>
 
               <sort
-                  className="btn btn-xs btn-default sortBtn"
+                  className="btn btn-xs btn-primary sortBtn"
                   sortKey={'AUTHOR'}
                   onSort={ onSort }
+                  activeSortKey={sortKey}
               >Author</sort>
 
               <sort
-                  className="btn btn-xs btn-default sortBtn"
+                  className="btn btn-xs btn-primary sortBtn"
                   sortKey={'COMMENTS'}
                   onSort={ onSort }
+                  activeSortKey={sortKey}
               >Comments</sort>
 
               <sort
-                  className="btn btn-xs btn-default sortBtn"
+                  className="btn btn-xs btn-primary sortBtn"
                   sortKey={'POINTS'}
                   onSort={ onSort }
+                  activeSortKey={sortKey}
               >Points</sort>
+
+              <hr/>
           </div>
+
         {
-          SORTS['TITLE'](list).map(item =>
+            SORTS[sortKey](list).map(item =>
             <div key={item.objectId}>
               <h1>
                 <a href={ item.url }>{item.title}</a> by {item.author}
@@ -303,9 +326,21 @@ const Button = ({ onclick, children, className='' }) =>
 
     const Loading = () => <div>Loading...</div>
     const ButtonWithLoading = withLoading(Button);
-    const Sort = ({ sortKey, onSort, children }) =>
-        <Button onClick={() => onSort(sortKey)}>
-            { children }
-        </Button>
+
+    const Sort = ({ sortKey, onSort, children, className, activeSortKey }) => {
+        const sortClass = ['btn default'];
+
+        if(sortKey === activeSortKey){
+            sortClass.push('btn btn-primary')
+        }
+
+       return (
+           <Button
+               className={ sortClass.join(' ') }
+               onClick={() => onSort(sortKey)}>
+               { children }
+           </Button>
+       )
+    }
 
 export default App;
