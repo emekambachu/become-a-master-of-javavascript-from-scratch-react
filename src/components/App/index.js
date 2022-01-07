@@ -3,9 +3,8 @@ import '../../App.css';
 import list from '../../list';
 import React, {Component} from "react";
 import { Container, Row, FormGroup} from 'react-bootstrap';
-import PropTypes from 'prop-types';
-import { sortBy } from 'lodash';
 import Table from '../Table/index';
+import Search from '../Search/index';
 import { Button, Loading } from '../Button/index';
 import {
     DEFAULT_QUERY, DEFAULT_PAGE, DEFAULT_HPP, PATH_BASE, PATH_SEARCH, PARAM_SEARCH, PARAM_PAGE, PARAM_HPP
@@ -14,13 +13,6 @@ import {
 // const url = PATH_BASE + PATH_SEARCH + '?' + PARAM_SEARCH + DEFAULT_QUERY;
 const url = `${PATH_BASE}${PATH_SEARCH}?${PARAM_SEARCH}${DEFAULT_QUERY}&${PARAM_PAGE}&${PARAM_HPP}${DEFAULT_HPP}`;
 console.log(url);
-
-// Filter the results by search
-function isSearched(searchTerm){
-    return function(item){
-        return !searchTerm || item.title.toLowerCase().includes(searchTerm.toLowerCase());
-    }
-}
 
 const withLoading = (Component) => ({ isLoading, ...rest }) =>
     isLoading ? <Loading /> : <Component {...rest} />
@@ -164,48 +156,6 @@ class App extends Component{
             </div>
         );
 
-    }
-}
-
-// class Search extends Component {
-//   render() {
-//     const { onChange, value, children } = this.props;
-//   }
-// }
-
-class Search extends Component {
-
-    componentDidMount() {
-        this.input.focus();
-    }
-
-    render(){
-        const { onChange, value, children, onSubmit } = this.props;
-        return(
-            <form onSubmit={ onSubmit }>
-                <FormGroup>
-                    <h1 style={{ fontWeight: 'bold' }}>{ children }</h1>
-                    <hr style={{ border: '2px solid black', width: '100px' }} />
-                    <div className="input-group">
-                        <input
-                            className="form-control width100 searchForm"
-                            type="text"
-                            onChange={ onChange }
-                            value={ value }
-                            ref={(node) => { this.input = node }}
-                        />
-
-                        <span className="input-group-btn">
-                <Button
-                    className="btn btn-primary searchBtn"
-                    type="submit">Search
-                </Button>
-              </span>
-
-                    </div>
-                </FormGroup>
-            </form>
-        )
     }
 }
 
