@@ -31,6 +31,15 @@ function isSearched(searchTerm){
 const withLoading = (Component) => ({ isLoading, ...rest }) =>
     isLoading ? <Loading /> : <Component {...rest} />
 
+const updateTopStories = (hits, page) => prevState => {
+    const { searchKey, results } = prevState;
+    const oldHits = results && results[searchKey] ? results[searchKey].hits : [];
+    const updatedHits = [...oldHits, ...hits];
+
+    return { results: { ...results, [searchKey]: { hits: updatedHits, page }}, isLoading: false
+    }
+}
+
 class App extends Component{
 
   // Setting up internal component state
@@ -45,7 +54,6 @@ class App extends Component{
       searchKey: '',
       searchTerm: DEFAULT_QUERY,
       isLoading: false,
-      sortKey: 'NONE',
     }
 
     // bind the functions to this (app component)
@@ -54,15 +62,8 @@ class App extends Component{
     this.fetchTopStories = this.fetchTopStories.bind(this);
     this.setTopStories = this.setTopStories.bind(this);
     this.onSubmit = this.onSubmit.bind(this);
-    this.onSort = this.onSort.bind(this);
 
   }
-
-  // Sorting Function
-    onSort(sortKey){
-      const isSortReverse = this.state.sortKey === sortKey && !this.state.isSortReverse;
-      this.setState({ sortKey, isSortReverse });
-    }
 
   // Check top stories search term
     checkTopStoriesSearchTerm(searchTerm){
@@ -73,14 +74,8 @@ class App extends Component{
     setTopStories(result){
       // get hits and page from result
       const {hits, page} = result;
-      // meaning page is not 0, button might has been clicked, page might be 1 or 2
-        // Old hits are already available in the state
-      // const oldHits = page !== 0 ? this.state.result.hits : [];
-        const { searchKey, results } = this.state;
-        const oldHits = results && results[searchKey] ? results[searchKey].hits : [];
-      const updatedHits = [...oldHits, ...hits];
-      this.setState({ results: { ...results, [searchKey]: { hits: updatedHits, page }}, isLoading: false
-      });
+
+      this.setState(updateTopStories(hits, page));
     }
 
   // Fetch the stories
@@ -131,7 +126,7 @@ class App extends Component{
   }
 
   render (){
-    const { results, searchTerm, searchKey, isLoading, sortKey, isSortReverse } = this.state;
+    const { results, searchTerm, searchKey, isLoading } = this.state;
 
     // if(!result){ return null; }
     const page = (results && results[searchKey] && results[searchKey].page) || 0;
@@ -158,10 +153,6 @@ class App extends Component{
             <Row>
                 <Table
                 list={ list }
-                sortKey={ sortKey }
-                isSortReverse={ isSortReverse }
-                onSort={ this.onSort }
-                searchTerm={ searchTerm }
                 removeItem={ this.removeItem }
                 />
 
@@ -224,74 +215,99 @@ class Search extends Component {
     }
 }
 
-const Table = ({ list, searchTerm, removeItem, sortKey, onSort, isSortReverse}) => {
+class Table extends Component {
 
-    const sortedList = SORTS[sortKey](list);
-    const reverseSortedList = isSortReverse ? sortedList.reverse() : sortedList;
-
-  return(
-      <div className="col-sm-10 col-sm-offset-1">
-          <div className="text-center">
-
-              <hr/>
-
-              <sort
-                  className="btn btn-xs btn-primary sortBtn"
-                  sortKey={'NONE'}
-                  onSort={ onSort }
-                  activeSortKey={sortKey}
-              >Default</sort>
-
-              <sort
-                  className="btn btn-xs btn-primary sortBtn"
-                  sortKey={'TITLE'}
-                  onSort={ onSort }
-                  activeSortKey={sortKey}
-              >Title</sort>
-
-              <sort
-                  className="btn btn-xs btn-primary sortBtn"
-                  sortKey={'AUTHOR'}
-                  onSort={ onSort }
-                  activeSortKey={sortKey}
-              >Author</sort>
-
-              <sort
-                  className="btn btn-xs btn-primary sortBtn"
-                  sortKey={'COMMENTS'}
-                  onSort={ onSort }
-                  activeSortKey={sortKey}
-              >Comments</sort>
-
-              <sort
-                  className="btn btn-xs btn-primary sortBtn"
-                  sortKey={'POINTS'}
-                  onSort={ onSort }
-                  activeSortKey={sortKey}
-              >Points</sort>
-
-              <hr/>
-          </div>
-
-        {
-            SORTS[sortKey](list).map(item =>
-            <div key={item.objectId}>
-              <h1>
-                <a href={ item.url }>{item.title}</a> by {item.author}
-              </h1>
-              <h4>
-                {item.num_comments} Comments | { item.points } Points
-                  <button className="btn btn-danger btn-xs"
-                          type="button"
-                          onClick={() => removeItem(item.objectId)}>
-                      Remove</button>
-              </h4><hr/>
-
-            </div>
-          )
+    constructor(props){
+        super(props);
+        this.state = {
+            sortKey: 'NONE',
+            isSortReverse: false
         }
-      </div>
-  )
+        this.onSort = this.onSort.bind(this);
+    }
+
+    // Sorting Function
+    onSort(sortKey){
+        const isSortReverse = this.state.sortKey === sortKey && !this.state.isSortReverse;
+        this.setState({ sortKey, isSortReverse });
+    }
+
+    render() {
+        const {list, removeItem} = this.props;
+        const {sortKey, isSortReverse} = this.state;
+        const sortedList = SORTS[sortKey](list);
+        const reverseSortedList = isSortReverse ? sortedList.reverse() : sortedList;
+
+        return (
+            <div className="col-sm-10 col-sm-offset-1">
+                <div className="text-center">
+
+                    <hr/>
+
+                    <sort
+                        className="btn btn-xs btn-primary sortBtn"
+                        sortKey={'NONE'}
+                        onSort={this.onSort}
+                        activeSortKey={sortKey}
+                    >Default
+                    </sort>
+
+                    <sort
+                        className="btn btn-xs btn-primary sortBtn"
+                        sortKey={'TITLE'}
+                        onSort={this.onSort}
+                        activeSortKey={sortKey}
+                    >Title
+                    </sort>
+
+                    <sort
+                        className="btn btn-xs btn-primary sortBtn"
+                        sortKey={'AUTHOR'}
+                        onSort={this.onSort}
+                        activeSortKey={sortKey}
+                    >Author
+                    </sort>
+
+                    <sort
+                        className="btn btn-xs btn-primary sortBtn"
+                        sortKey={'COMMENTS'}
+                        onSort={this.onSort}
+                        activeSortKey={sortKey}
+                    >Comments
+                    </sort>
+
+                    <sort
+                        className="btn btn-xs btn-primary sortBtn"
+                        sortKey={'POINTS'}
+                        onSort={this.onSort}
+                        activeSortKey={sortKey}
+                    >Points
+                    </sort>
+
+                    <hr/>
+                </div>
+
+                {
+                    SORTS[sortKey](list).map(item =>
+                        <div key={item.objectId}>
+                            <h1>
+                                <a href={item.url}>{item.title}</a> by {item.author}
+                            </h1>
+                            <h4>
+                                {item.num_comments} Comments | {item.points} Points
+                                <button className="btn btn-danger btn-xs"
+                                        type="button"
+                                        onClick={() => removeItem(item.objectId)}>
+                                    Remove</button>
+                            </h4>
+                            <hr/>
+
+                        </div>
+                    )
+                }
+            </div>
+        )
+    }
 }
 
 Table.propTypes = {
